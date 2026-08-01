@@ -3,6 +3,9 @@ name = "ansa"
 version = "0.1.0"
 edition = "2021"
 description = "A tiny single point for agents to exchange messages"
+license = "MIT"
+authors = ["Interpretica <info@interpretica.io>"]
+repository = "https://github.com/interpretica-io/ansa"
 
 [dependencies]
 axum = "0.7"
@@ -11,6 +14,28 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 terminal_size = "0.4"
+
+[package.metadata.deb]
+section = "net"
+priority = "optional"
+extended-description = """\
+A tiny single point where independent agents drop and pick up messages for \
+one another. Any agent that can speak HTTP can leave a message addressed to \
+another agent and read its own inbox."""
+assets = [
+  ["target/release/ansa", "usr/bin/", "755"],
+  ["README.md", "usr/share/doc/ansa/README.md", "644"],
+  ["LICENSE", "usr/share/doc/ansa/LICENSE", "644"],
+]
+
+[package.metadata.generate-rpm]
+# The musl binaries are fully static; ldd-based dependency scan is pointless.
+auto-req = "no"
+assets = [
+  { source = "target/release/ansa", dest = "/usr/bin/ansa", mode = "755" },
+  { source = "README.md", dest = "/usr/share/doc/ansa/README.md", mode = "644", doc = true },
+  { source = "LICENSE", dest = "/usr/share/doc/ansa/LICENSE", mode = "644", doc = true },
+]
 
 [profile.release]
 opt-level = "z"

@@ -57,3 +57,100 @@ jobs:
           zip: windows
           checksum: sha256
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  package-linux:
+    name: Package deb/rpm (${{ matrix.target }})
+    needs: create-release
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-unknown-linux-musl, aarch64-unknown-linux-musl]
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cross,cargo-deb,cargo-generate-rpm
+      - name: Build
+        run: cross build --release --target ${{ matrix.target }}
+      - name: Build .deb
+        run: |
+          mkdir -p dist
+          cargo deb --no-build --no-strip --target ${{ matrix.target }} -o dist/
+      - name: Build .rpm
+        run: cargo generate-rpm --target ${{ matrix.target }} -o dist/
+      - name: Checksums
+        run: |
+          cd dist
+          for f in *; do sha256sum "$f" > "$f.sha256"; done
+      - name: Upload to release
+        run: gh release upload "$GITHUB_REF_NAME" dist/*
+
+  package-windows:
+    name: Package MSI (x86_64)
+    needs: create-release
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-wix
+      - name: Install WiX toolset
+        run: |
+          choco install wixtoolset --no-progress -y
+          $bin = Get-Item "C:\Program Files (x86)\WiX Toolset v*\bin" | Select-Object -Last 1
+          Add-Content $env:GITHUB_PATH $bin.FullName
+      - name: Build
+        run: cargo build --release
+      - name: Build .msi
+        run: |
+          mkdir dist
+          cargo wix --no-build --nocapture --output dist/
+      - name: Checksums and upload
+        shell: bash
+        run: |
+          cd dist
+          for f in *.msi; do sha256sum "$f" > "$f.sha256"; done
+          gh release upload "$GITHUB_REF_NAME" *
+
+  package-macos:
+    name: Package pkg (${{ matrix.target }})
+    needs: create-release
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-apple-darwin, aarch64-apple-darwin]
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Build .pkg
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p pkgroot/usr/local/bin dist
+          cp "target/${{ matrix.target }}/release/ansa" pkgroot/usr/local/bin/
+          xattr -cr pkgroot
+          pkgbuild \
+            --root pkgroot \
+            --identifier io.interpretica.ansa \
+            --version "$version" \
+            --install-location / \
+            "dist/ansa-$version-${{ matrix.target }}.pkg"
+      - name: Checksums and upload
+        run: |
+          cd dist
+          for f in *.pkg; do shasum -a 256 "$f" > "$f.sha256"; done
+          gh release upload "$GITHUB_REF_NAME" *
