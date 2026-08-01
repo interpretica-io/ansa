@@ -50,6 +50,7 @@ bus (see [`skills/`](skills/) for details):
 ```sh
 ansa install-skill claude             # -> ~/.claude/skills/ansa-bus
 ansa install-skill claude --project   # -> ./.claude/skills/ansa-bus
+ansa install-skill codex              # -> ~/.codex/skills/ansa-bus
 ansa install-skill chatgpt            # writes Custom GPT files + setup steps
 ```
 

@@ -32,8 +32,8 @@ struct AppState {
 }
 
 const USAGE: &str = "\
-usage: ansa                               start the hub (env: ANSA_ADDR, ANSA_DATA)
-       ansa install-skill claude|chatgpt  teach an assistant to use the bus
+usage: ansa                                     start the hub (env: ANSA_ADDR, ANSA_DATA)
+       ansa install-skill claude|codex|chatgpt  teach an assistant to use the bus
        ansa --version | --help
 ";
 
