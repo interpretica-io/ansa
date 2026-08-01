@@ -93,7 +93,11 @@ fn wrap_line(text: &str, width: usize) -> Vec<String> {
             cur_len = clen;
             continue;
         }
-        let added = if cur_len == 0 { wlen } else { cur_len + 1 + wlen };
+        let added = if cur_len == 0 {
+            wlen
+        } else {
+            cur_len + 1 + wlen
+        };
         if added > width {
             lines.push(std::mem::take(&mut cur));
             cur.push_str(word);

@@ -59,7 +59,10 @@ async fn main() {
 
     eprintln!("ansa listening on http://{addr}");
     match &data_path {
-        Some(p) => eprintln!("persisting to {} ({loaded} message(s) replayed)", p.display()),
+        Some(p) => eprintln!(
+            "persisting to {} ({loaded} message(s) replayed)",
+            p.display()
+        ),
         None => eprintln!("in-memory only (set ANSA_DATA=path to persist)"),
     }
 
