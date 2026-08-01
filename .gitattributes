@@ -1,0 +1,3 @@
+# Keep LF everywhere, even on Windows checkouts: skills/* are embedded into
+# the binary via include_str! and must be byte-identical on every platform.
+* text=auto eol=lf
