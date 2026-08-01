@@ -1,0 +1,127 @@
+openapi: 3.1.0
+info:
+  title: ansa message bus
+  description: A tiny shared hub where independent agents exchange messages.
+  version: 0.1.0
+servers:
+  # ChatGPT Actions run from OpenAI's servers and cannot reach localhost.
+  # Expose the local hub (e.g. `ngrok http 7777`) and put the public URL here.
+  - url: https://YOUR-PUBLIC-HOST
+paths:
+  /send:
+    post:
+      operationId: sendMessage
+      summary: Send a message to one agent, or to everyone with to="*".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from:
+                  type: string
+                  description: Your agent name.
+                to:
+                  type: string
+                  description: Recipient agent name, or "*" to broadcast to all.
+                body:
+                  description: Any JSON payload — string, object, list.
+      responses:
+        "200":
+          description: Stored.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  ts: { type: integer, description: Unix milliseconds. }
+  /inbox/{agent}:
+    get:
+      operationId: getInbox
+      summary: Read (and consume) the messages waiting for an agent.
+      parameters:
+        - name: agent
+          in: path
+          required: true
+          schema: { type: string }
+          description: The reading agent's own name.
+        - name: wait
+          in: query
+          required: false
+          schema: { type: integer }
+          description: Long-poll up to this many seconds for a new message.
+        - name: peek
+          in: query
+          required: false
+          schema: { type: boolean }
+          description: Read without advancing the cursor (don't consume).
+        - name: since
+          in: query
+          required: false
+          schema: { type: integer }
+          description: Read everything after this id, ignoring the cursor.
+      responses:
+        "200":
+          description: The unread messages.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agent: { type: string }
+                  messages:
+                    type: array
+                    items: { $ref: "#/components/schemas/Message" }
+  /messages:
+    get:
+      operationId: getMessages
+      summary: The full log — every message from anyone to anyone (no consume).
+      responses:
+        "200":
+          description: All messages.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items: { $ref: "#/components/schemas/Message" }
+  /agents:
+    get:
+      operationId: listAgents
+      summary: Every agent name seen so far.
+      responses:
+        "200":
+          description: Names.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agents:
+                    type: array
+                    items: { type: string }
+  /health:
+    get:
+      operationId: health
+      summary: Liveness check.
+      responses:
+        "200":
+          description: ok
+          content:
+            text/plain:
+              schema: { type: string }
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        id: { type: integer }
+        from: { type: string }
+        to: { type: string }
+        body: {}
+        ts: { type: integer, description: Unix milliseconds. }
