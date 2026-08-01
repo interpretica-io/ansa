@@ -1,6 +1,6 @@
 [package]
 name = "ansa"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "A tiny single point for agents to exchange messages"
 license = "MIT"
