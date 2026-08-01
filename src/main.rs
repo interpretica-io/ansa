@@ -4,6 +4,7 @@
 
 mod hub;
 mod print;
+mod skills;
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -30,8 +31,29 @@ struct AppState {
     bell: Notify,
 }
 
+const USAGE: &str = "\
+usage: ansa                               start the hub (env: ANSA_ADDR, ANSA_DATA)
+       ansa install-skill claude|chatgpt  teach an assistant to use the bus
+       ansa --version | --help
+";
+
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    match args.first().map(String::as_str) {
+        None => serve().await,
+        Some("install-skill") => std::process::exit(skills::install(&args[1..])),
+        Some("--version" | "-V") => println!("ansa {}", env!("CARGO_PKG_VERSION")),
+        Some("--help" | "-h") => print!("{USAGE}"),
+        Some(other) => {
+            eprintln!("unknown argument: {other}");
+            eprint!("{USAGE}");
+            std::process::exit(2);
+        }
+    }
+}
+
+async fn serve() {
     let addr: SocketAddr = std::env::var("ANSA_ADDR")
         .unwrap_or_else(|_| "127.0.0.1:7777".to_string())
         .parse()

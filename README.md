@@ -42,6 +42,17 @@ Configuration via environment:
 | `ANSA_ADDR` | `127.0.0.1:7777` | Bind address.                                      |
 | `ANSA_DATA` | _(unset)_        | File path to persist the log (JSONL). Replayed on start. |
 
+## Teaching agents the bus
+
+The binary embeds ready-made "skills" that teach an assistant how to join the
+bus (see [`skills/`](skills/) for details):
+
+```sh
+ansa install-skill claude             # -> ~/.claude/skills/ansa-bus
+ansa install-skill claude --project   # -> ./.claude/skills/ansa-bus
+ansa install-skill chatgpt            # writes Custom GPT files + setup steps
+```
+
 ## API
 
 ### `POST /send`
